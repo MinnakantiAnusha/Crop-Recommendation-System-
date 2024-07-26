@@ -58,7 +58,7 @@ model = train_model()
 st.markdown("""
     <style>
         .header {
-            font-size: 36px;
+            font-size: 28px; /* Smaller font size for GROW */
             font-weight: bold;
             color: #4CAF50; /* Green color for farming theme */
             text-align: center;
@@ -67,6 +67,13 @@ st.markdown("""
             background-color: #F9FBE7; /* Light green background */
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             margin-bottom: 20px;
+        }
+        .description {
+            font-size: 20px; /* Smaller font size for the description */
+            font-weight: bold;
+            color: #4CAF50; /* Green color for farming theme */
+            text-align: center;
+            padding: 5px;
         }
         .section-header {
             font-size: 24px;
@@ -87,8 +94,8 @@ st.markdown("""
         }
     </style>
     <div class="header">
-        <span style="font-size: 36px;">🌾 GROW 🌾</span><br>
-        Guidance for Recommended Optimal Yields
+        <span style="font-size: 28px;">🌾 GROW 🌾</span><br>
+        <span class="description">Guidance for Recommended Optimal Yields & Wellness</span>
     </div>
 """, unsafe_allow_html=True)
 
