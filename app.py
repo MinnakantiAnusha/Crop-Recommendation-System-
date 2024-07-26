@@ -55,26 +55,63 @@ def train_model():
 model = train_model()
 
 # Streamlit UI
-st.title('🌾 Crop Recommendation System')
+st.markdown("""
+    <style>
+        .header {
+            font-size: 36px;
+            font-weight: bold;
+            color: #4CAF50; /* Green color for farming theme */
+            text-align: center;
+            padding: 10px;
+            border-radius: 15px;
+            background-color: #F9FBE7; /* Light green background */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .section-header {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        .sidebar {
+            background-color: #E8F5E9; /* Light green for sidebar */
+        }
+        .plant-image {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100px;
+            height: auto;
+            padding-bottom: 10px;
+        }
+    </style>
+    <div class="header">
+        <span style="font-size: 36px;">🌾 GROW 🌾</span><br>
+        Guidance for Recommended Optimal Yields
+    </div>
+""", unsafe_allow_html=True)
 
+st.sidebar.markdown('<div class="sidebar">', unsafe_allow_html=True)
 st.sidebar.header('User Input Parameters')
+st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 # User input method
 input_method = st.sidebar.radio("Choose input method:", ("Sliders", "Text Boxes"))
 
 def user_input_features():
     if input_method == "Sliders":
-        N = st.sidebar.slider('N', 0, 200, 100)
-        P = st.sidebar.slider('P', 0, 200, 50)
-        K = st.sidebar.slider('K', 0, 200, 100)
+        N = st.sidebar.slider('Nitrogen', 0, 200, 100)
+        P = st.sidebar.slider('Phosphorus', 0, 200, 50)
+        K = st.sidebar.slider('Potassium', 0, 200, 100)
         temperature = st.sidebar.slider('Temperature', 10.0, 50.0, 25.0)
         humidity = st.sidebar.slider('Humidity', 20.0, 100.0, 50.0)
         ph = st.sidebar.slider('pH', 3.0, 10.0, 6.5)
         rainfall = st.sidebar.slider('Rainfall', 0.0, 300.0, 100.0)
     else:
-        N = st.sidebar.number_input('N', 0, 200, 100)
-        P = st.sidebar.number_input('P', 0, 200, 50)
-        K = st.sidebar.number_input('K', 0, 200, 100)
+        N = st.sidebar.number_input('Nitrogen', 0, 200, 100)
+        P = st.sidebar.number_input('Phosphorus', 0, 200, 50)
+        K = st.sidebar.number_input('Potassium', 0, 200, 100)
         temperature = st.sidebar.number_input('Temperature', 10.0, 50.0, 25.0)
         humidity = st.sidebar.number_input('Humidity', 20.0, 100.0, 50.0)
         ph = st.sidebar.number_input('pH', 3.0, 10.0, 6.5)
@@ -101,7 +138,7 @@ df_top_crops = pd.DataFrame({
 chart = alt.Chart(df_top_crops).mark_bar().encode(
     x=alt.X('Crop', title='Crop'),
     y=alt.Y('Probability', title='Probability'),
-    color='Probability:O',
+    color=alt.Color('Probability', scale=alt.Scale(scheme='blues')),  # Changed to blue color scheme
     tooltip=['Crop', 'Probability']
 ).properties(
     title='Top 3 Recommended Crops'
