@@ -1,7 +1,8 @@
 pandas
 numpy
 scikit-learn
-tensorflow==2.14.0
+tensorflow==2.13.0
 streamlit
+altair
 matplotlib
 seaborn
