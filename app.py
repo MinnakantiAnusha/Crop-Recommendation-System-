@@ -128,32 +128,33 @@ def user_input_features():
 user_input = user_input_features()
 user_input_scaled = scaler.transform(user_input)
 
-# Predict the crop
-prediction = model.predict(user_input_scaled)
-top_3_indices = np.argsort(prediction[0])[-3:][::-1]
-top_3_crops = label_encoder.inverse_transform(top_3_indices)
-top_3_scores = prediction[0][top_3_indices]
-top_3_probs = np.exp(top_3_scores) / np.sum(np.exp(top_3_scores))
+if st.sidebar.button('Submit'):
+    # Predict the crop
+    prediction = model.predict(user_input_scaled)
+    top_3_indices = np.argsort(prediction[0])[-3:][::-1]
+    top_3_crops = label_encoder.inverse_transform(top_3_indices)
+    top_3_scores = prediction[0][top_3_indices]
+    top_3_probs = np.exp(top_3_scores) / np.sum(np.exp(top_3_scores))
 
-# Create a DataFrame for plotting
-df_top_crops = pd.DataFrame({
-    'Crop': top_3_crops,
-    'Probability': top_3_probs
-})
+    # Create a DataFrame for plotting
+    df_top_crops = pd.DataFrame({
+        'Crop': top_3_crops,
+        'Probability': top_3_probs
+    })
 
-# Plot using Altair
-chart = alt.Chart(df_top_crops).mark_bar().encode(
-    x=alt.X('Crop', title='Crop'),
-    y=alt.Y('Probability', title='Probability'),
-    color=alt.Color('Probability', scale=alt.Scale(scheme='blues')),  # Changed to blue color scheme
-    tooltip=['Crop', 'Probability']
-).properties(
-    title='Top 3 Recommended Crops'
-)
+    # Plot using Altair
+    chart = alt.Chart(df_top_crops).mark_bar().encode(
+        x=alt.X('Crop', title='Crop'),
+        y=alt.Y('Probability', title='Probability'),
+        color=alt.Color('Probability', scale=alt.Scale(scheme='blues')),  # Changed to blue color scheme
+        tooltip=['Crop', 'Probability']
+    ).properties(
+        title='Top 3 Recommended Crops'
+    )
 
-# Streamlit components
-st.subheader('Top 3 Recommended Crops:')
-for crop, prob in zip(top_3_crops, top_3_probs):
-    st.write(f"{crop} (Probability: {prob:.2f})")
+    # Streamlit components
+    st.subheader('Top 3 Recommended Crops:')
+    for crop, prob in zip(top_3_crops, top_3_probs):
+        st.write(f"{crop} (Probability: {prob:.2f})")
 
-st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, use_container_width=True)
