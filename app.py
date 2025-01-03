@@ -4,6 +4,7 @@ import pandas as pd
 import pickle
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from tensorflow.keras.models import load_model
+from jinja2 import Environment, FileSystemLoader
 
 # Load the model
 model = load_model('crop.h5')
@@ -16,20 +17,15 @@ with open('label_encoder.pkl', 'rb') as f:
 with open('standard_scaler.pkl', 'rb') as f:
     scaler = pickle.load(f)
 
-# Streamlit App
-def main():
-    st.title("Crop Recommendation System 🌱")
-    st.markdown(
-        """
-        <style>
-            .main { background-color: #f7f7f7; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.image("crop.jpg", use_column_width=True)
+# Set up Jinja2 environment
+env = Environment(loader=FileSystemLoader('.'))
 
-    st.write("Enter the following details to predict the recommended crops:")
+def main():
+    st.set_page_config(page_title="Crop Recommendation System")
+
+    # Render the index.html template
+    index_template = env.get_template('index.html')
+    st.markdown(index_template.render(), unsafe_allow_html=True)
 
     # Inputs
     N = st.number_input("Nitrogen (N):", min_value=0.0, step=1.0)
@@ -55,10 +51,9 @@ def main():
             top_3_crops = label_encoder.inverse_transform(top_3_indices)
             top_3_probs = prediction[0][top_3_indices]
 
-            # Display results
-            st.subheader("Top 3 Recommended Crops:")
-            for crop, prob in zip(top_3_crops, top_3_probs):
-                st.write(f"- {crop} (Probability: {prob:.2f})")
+            # Render the result.html template
+            result_template = env.get_template('result.html')
+            st.markdown(result_template.render(top_3_crops=top_3_crops, top_3_probs=top_3_probs), unsafe_allow_html=True)
         except Exception as e:
             st.error(f"Error: {e}")
 
