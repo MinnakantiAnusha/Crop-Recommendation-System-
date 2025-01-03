@@ -1,29 +1,33 @@
 import streamlit as st
 import numpy as np
-import pickle
 import pandas as pd
+import pickle
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from tensorflow.keras.models import load_model
-import tensorflow as tf
+from jinja2 import Environment, FileSystemLoader
+
+# Load the model
+model = load_model('crop.h5')
+
+# Load the label encoder
+with open('label_encoder.pkl', 'rb') as f:
+    label_encoder = pickle.load(f)
+
+# Load the standard scaler
+with open('standard_scaler.pkl', 'rb') as f:
+    scaler = pickle.load(f)
+
+# Set up Jinja2 environment
+env = Environment(loader=FileSystemLoader('.'))
 
 def main():
     st.set_page_config(page_title="Crop Recommendation System")
 
-    # Load the model
-    model = tf.keras.models.load_model('crop.h5')
+    # Render the index.html template
+    index_template = env.get_template('index.html')
+    st.markdown(index_template.render(), unsafe_allow_html=True)
 
-    # Load the label encoder
-    with open('label_encoder.pkl', 'rb') as f:
-        label_encoder = pickle.load(f)
-
-    # Load the standard scaler
-    with open('standard_scaler.pkl', 'rb') as f:
-        scaler = pickle.load(f)
-
-    # User input
-    st.title("Crop Recommendation System")
-    st.write("Please enter the following information:")
-
+    # Inputs
     N = st.number_input("Nitrogen (N):", min_value=0.0, step=1.0)
     P = st.number_input("Phosphorus (P):", min_value=0.0, step=1.0)
     K = st.number_input("Potassium (K):", min_value=0.0, step=1.0)
@@ -32,11 +36,12 @@ def main():
     ph = st.number_input("Soil pH:", min_value=0.0, step=0.01)
     rainfall = st.number_input("Rainfall (mm):", min_value=0.0, step=0.1)
 
+    # Predict button
     if st.button("Predict"):
         try:
             # Prepare input
-            features = [N, P, K, temperature, humidity, ph, rainfall]
-            features_scaled = scaler.transform([features])
+            features = np.array([[N, P, K, temperature, humidity, ph, rainfall]])
+            features_scaled = scaler.transform(features)
 
             # Prediction
             prediction = model.predict(features_scaled)
@@ -46,10 +51,9 @@ def main():
             top_3_crops = label_encoder.inverse_transform(top_3_indices)
             top_3_probs = prediction[0][top_3_indices]
 
-            # Display results
-            st.subheader("Top 3 Recommended Crops:")
-            for crop, prob in zip(top_3_crops, top_3_probs):
-                st.write(f"- {crop} (Probability: {prob:.2f})")
+            # Render the result.html template
+            result_template = env.get_template('result.html')
+            st.markdown(result_template.render(top_3_crops=top_3_crops, top_3_probs=top_3_probs), unsafe_allow_html=True)
         except Exception as e:
             st.error(f"Error: {e}")
 
