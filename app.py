@@ -27,7 +27,7 @@ def main():
         """,
         unsafe_allow_html=True,
     )
-    st.image("static/crop.jpg", use_column_width=True)
+    st.image("crop.jpg", use_column_width=True)
 
     st.write("Enter the following details to predict the recommended crops:")
 
