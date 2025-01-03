@@ -1,63 +1,48 @@
 import streamlit as st
+from PIL import Image
 import numpy as np
 import pickle
-import pandas as pd
-import tensorflow as tf
 
-# Load the model, label encoder, and scaler once at the start
-model = tf.keras.models.load_model('crop.h5')
+# Load the image
+image = Image.open('crop.png')
 
-with open('label_encoder.pkl', 'rb') as f:
-    label_encoder = pickle.load(f)
+# Load the crop recommendation model
+model = pickle.load(open('crop_model.pkl', 'rb'))
 
-with open('standard_scaler.pkl', 'rb') as f:
-    scaler = pickle.load(f)
+# Define the feature names
+feature_names = ['nitrogen', 'phosphorus', 'potassium', 'temperature', 'humidity', 'ph', 'rainfall']
 
-# Function to read HTML files
-def load_html(file_path):
-    with open(file_path, 'r') as file:
-        return file.read()
+# Create the Streamlit app
+st.title('Crop Recommendation System')
+st.image(image, caption='Crop Recommendation System', use_column_width=True)
 
-# Load HTML content
-index_html = load_html('index.html')
-result_html_template = load_html('result.html')
+# Create the form for user inputs
+with st.form(key='crop_recommendation'):
+    st.header('Enter the following details:')
 
-# Display the index page
-st.markdown(index_html, unsafe_allow_html=True)
+    # User inputs
+    nitrogen = st.number_input('Nitrogen (N)', min_value=0.0)
+    phosphorus = st.number_input('Phosphorus (P)', min_value=0.0)
+    potassium = st.number_input('Potassium (K)', min_value=0.0)
+    temperature = st.number_input('Temperature', min_value=0.0)
+    humidity = st.number_input('Humidity', min_value=0.0)
+    ph = st.number_input('pH', min_value=0.0)
+    rainfall = st.number_input('Rainfall', min_value=0.0)
 
-# Collect user inputs
-N = st.number_input("Nitrogen (N)", min_value=0.0)
-P = st.number_input("Phosphorus (P)", min_value=0.0)
-K = st.number_input("Potassium (K)", min_value=0.0)
-temperature = st.number_input("Temperature", min_value=0.0)
-humidity = st.number_input("Humidity", min_value=0.0)
-ph = st.number_input("pH", min_value=0.0)
-rainfall = st.number_input("Rainfall", min_value=0.0)
+    # Submit button
+    submit = st.form_submit_button(label='Predict')
 
-# Predict button
-if st.button("Predict"):
-    try:
-        # Prepare features for prediction
-        features = np.array([[N, P, K, temperature, humidity, ph, rainfall]])
-        features_scaled = scaler.transform(features)
+if submit:
+    # Create the input array
+    input_data = np.array([nitrogen, phosphorus, potassium, temperature, humidity, ph, rainfall])
 
-        # Predict the crop
-        prediction = model.predict(features_scaled)
+    # Make the prediction
+    prediction = model.predict([input_data])
+    probabilities = model.predict_proba([input_data])
 
-        # Top 3 Recommendations
-        top_3_indices = np.argsort(prediction[0])[-3:][::-1]
-        top_3_crops = label_encoder.inverse_transform(top_3_indices)
-        top_3_probs = prediction[0][top_3_indices]
-
-        # Create result HTML
-        result_html = result_html_template.replace("{{results}}", 
-            "<br>".join([f"{crop} (Probability: {prob:.2f})" for crop, prob in zip(top_3_crops, top_3_probs)]))
-
-        # Display results using HTML
-        st.markdown(result_html, unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-
-# Optional: Add a link to go back or reload
-if st.button("Go Back"):
-    st.experimental_rerun()
+    # Display the results
+    st.write('Crop Recommendation Results:')
+    st.write('Top 3 Recommended Crops:')
+    st.write(f'1. {prediction[0]} (Probability: {probabilities[0][0]:.2f})')
+    st.write(f'2. {prediction[1]} (Probability: {probabilities[0][1]:.2f})')
+    st.write(f'3. {prediction[2]} (Probability: {probabilities[0][2]:.2f})')
