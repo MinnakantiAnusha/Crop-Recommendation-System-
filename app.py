@@ -1,57 +1,63 @@
 import streamlit as st
 import numpy as np
-import pandas as pd
 import pickle
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from tensorflow.keras.models import load_model
-from jinja2 import Environment, FileSystemLoader
+import pandas as pd
+import tensorflow as tf
 
-# Load the model
-model = load_model('crop.h5')
+# Load the model, label encoder, and scaler once at the start
+model = tf.keras.models.load_model('crop.h5')
 
-# Load the label encoder
 with open('label_encoder.pkl', 'rb') as f:
     label_encoder = pickle.load(f)
 
-# Load the standard scaler
 with open('standard_scaler.pkl', 'rb') as f:
     scaler = pickle.load(f)
 
-# Set up Jinja2 environment
-env = Environment(loader=FileSystemLoader('templates'))  # Assuming templates are in the 'templates' directory
+# Function to read HTML files
+def load_html(file_path):
+    with open(file_path, 'r') as file:
+        return file.read()
 
-def main():
-    st.set_page_config(page_title="Crop Recommendation System")
+# Load HTML content
+index_html = load_html('index.html')
+result_html_template = load_html('result.html')
 
-    # Render the index.html template
-    index_template = env.get_template('index.html')
-    st.markdown(index_template.render(background_image='crop.jpg'), unsafe_allow_html=True)
+# Display the index page
+st.markdown(index_html, unsafe_allow_html=True)
 
-    # Inputs
-    N = st.number_input("Nitrogen (N):", min_value=0.0, step=1.0)
-    P = st.number_input("Phosphorus (P):", min_value=0.0, step=1.0)
-    # ... (rest of the input fields)
+# Collect user inputs
+N = st.number_input("Nitrogen (N)", min_value=0.0)
+P = st.number_input("Phosphorus (P)", min_value=0.0)
+K = st.number_input("Potassium (K)", min_value=0.0)
+temperature = st.number_input("Temperature", min_value=0.0)
+humidity = st.number_input("Humidity", min_value=0.0)
+ph = st.number_input("pH", min_value=0.0)
+rainfall = st.number_input("Rainfall", min_value=0.0)
 
-    # Predict button
-    if st.button("Predict"):
-        try:
-            # Prepare input
-            features = np.array([[N, P, K, temperature, humidity, ph, rainfall]])
-            features_scaled = scaler.transform(features)
+# Predict button
+if st.button("Predict"):
+    try:
+        # Prepare features for prediction
+        features = np.array([[N, P, K, temperature, humidity, ph, rainfall]])
+        features_scaled = scaler.transform(features)
 
-            # Prediction
-            prediction = model.predict(features_scaled)
+        # Predict the crop
+        prediction = model.predict(features_scaled)
 
-            # Top 3 Recommendations
-            top_3_indices = np.argsort(prediction[0])[-3:][::-1]
-            top_3_crops = label_encoder.inverse_transform(top_3_indices)
-            top_3_probs = prediction[0][top_3_indices]
+        # Top 3 Recommendations
+        top_3_indices = np.argsort(prediction[0])[-3:][::-1]
+        top_3_crops = label_encoder.inverse_transform(top_3_indices)
+        top_3_probs = prediction[0][top_3_indices]
 
-            # Render the result.html template
-            result_template = env.get_template('result.html')
-            st.markdown(result_template.render(top_3_crops=top_3_crops, top_3_probs=top_3_probs, background_image='crop_result.jpg'), unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"Error: {e}")
+        # Create result HTML
+        result_html = result_html_template.replace("{{results}}", 
+            "<br>".join([f"{crop} (Probability: {prob:.2f})" for crop, prob in zip(top_3_crops, top_3_probs)]))
 
-if __name__ == "__main__":
-    main()
+        # Display results using HTML
+        st.markdown(result_html, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+
+# Optional: Add a link to go back or reload
+if st.button("Go Back"):
+    st.experimental_rerun()
