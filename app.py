@@ -4,7 +4,7 @@ import numpy as np
 import pickle
 
 # Load the image
-image = Image.open('crop.png')
+image = Image.open('crop.jpg')
 
 # Load the crop recommendation model
 model = pickle.load(open('crop_model.pkl', 'rb'))
